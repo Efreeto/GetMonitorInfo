@@ -11,15 +11,16 @@ Loop pathCount
     adapterId := NumGet(paths, offset, "UInt64")
     sourceId := NumGet(paths, offset + 8, "UInt")
     targetId := NumGet(paths, offset + 28, "UInt")
-    ; MsgBox adapterID " and " sourceId " and " id
+    ; MsgBox adapterID " and " sourceId " and " targetId
 
-    ; deviceName := Buffer(420)                       ; 420 for DISPLAYCONFIG_TARGET_DEVICE_NAME
-    ; NumPut("Int", 2, deviceName, 0)                 ; 2:DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME
-    ; NumPut("UInt", deviceName.Size, deviceName, 4)  ; size
-    ; NumPut("UInt64", adapterId, deviceName, 8)      ; adapterId
-    ; NumPut("UInt", targetId, deviceName, 16)        ; id
-    ; err := DllCall("DisplayConfigGetDeviceInfo", "Ptr", deviceName)
-    ; CheckError(err, A_LineNumber - 1)
+    deviceName := Buffer(420)                       ; 420 for DISPLAYCONFIG_TARGET_DEVICE_NAME
+    NumPut("Int", 2, deviceName, 0)                 ; 2:DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME
+    NumPut("UInt", deviceName.Size, deviceName, 4)  ; size
+    NumPut("UInt64", adapterId, deviceName, 8)      ; adapterId
+    NumPut("UInt", targetId, deviceName, 16)        ; id
+    err := DllCall("DisplayConfigGetDeviceInfo", "Ptr", deviceName)
+    CheckError(err, A_LineNumber - 1)
+    monitorFriendlyDeviceName := StrGet(deviceName.Ptr + 36)
     ; monitorDevicePath := StrGet(deviceName.Ptr + 164)
 
     colorInfo := Buffer(32)                         ; 32 for DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO
@@ -30,12 +31,12 @@ Loop pathCount
     err := DllCall("DisplayConfigGetDeviceInfo", "Ptr", colorInfo)
     CheckError(err, A_LineNumber - 1)
     value := NumGet(colorInfo, 20, "Int")    ; get the `value` after 20 header
-    advancedColorSupported := (value & 0x1)
-    advancedColorEnabled := (value & 0x2)
-    wideColorEnforced := (value & 0x4)
-    advancedColorForceDisabled := (value & 0x8)
+    advancedColorSupported := (value & 0x1) == 0x1
+    advancedColorEnabled := (value & 0x2) == 0x2
+    wideColorEnforced := (value & 0x4) == 0x4
+    advancedColorForceDisabled := (value & 0x8) == 0x8
     MsgBox(
-        ; "Monitor " monitorDevicePath "->"
+        "Monitor name: `"" monitorFriendlyDeviceName "`""
         "`n advancedColorSupported: " advancedColorSupported
         "`n advancedColorEnabled: " advancedColorEnabled
         "`n wideColorEnforced: " wideColorEnforced
